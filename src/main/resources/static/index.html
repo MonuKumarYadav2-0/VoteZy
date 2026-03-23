@@ -684,7 +684,7 @@ code{font-family:monospace;font-size:.73rem;background:var(--s3);padding:.1rem .
 'use strict';
 
 // ══ API ══
-const BASE = () => localStorage.getItem('votezy-url') || 'http://localhost:8080';
+const BASE = () => localStorage.getItem('votezy-url') || 'https://votezy-production-3887.up.railway.app';
 
 function parseErr(data) {
   if (!data) return 'Unknown error';
