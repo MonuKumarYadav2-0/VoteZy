@@ -1,0 +1,1252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>VoteZy — Election Management</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --bg:#08080F;--s1:#0F0F17;--s2:#14141E;--s3:#1A1A26;--s4:#20202E;
+  --bd:rgba(255,255,255,.05);--bd2:rgba(255,255,255,.09);--bd3:rgba(255,255,255,.14);
+  --purple:#6C63FF;--purple-l:#9B8FFF;--purple-d:rgba(108,99,255,.12);
+  --pink:#FF6B9D;--pink-d:rgba(255,107,157,.1);
+  --green:#4ADE80;--green-d:rgba(74,222,128,.1);
+  --amber:#FBB040;--amber-d:rgba(251,176,64,.1);
+  --red:#FF6B6B;--red-d:rgba(255,107,107,.1);
+  --teal:#2DD4BF;--teal-d:rgba(45,212,191,.1);
+  --txt:#F0F0FA;--txt2:#8890A8;--txt3:#454860;
+  --r:8px;--r2:12px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(--txt);min-height:100vh;overflow-x:hidden}
+body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse 700px 500px at 15% 15%,rgba(108,99,255,.04) 0%,transparent 65%),radial-gradient(ellipse 600px 400px at 85% 85%,rgba(255,107,157,.03) 0%,transparent 65%);pointer-events:none;z-index:0}
+
+/* ══ LAYOUT ══ */
+.layout{display:block;min-height:100vh;position:relative;z-index:1}
+
+/* ══ ICON SIDEBAR ══ */
+.sidebar{
+  position:fixed;top:0;left:0;bottom:0;width:64px;
+  background:var(--s1);border-right:1px solid var(--bd);
+  display:flex;flex-direction:column;align-items:center;
+  padding:14px 0;z-index:100;gap:2px;
+}
+.sb-logo{
+  width:38px;height:38px;border-radius:10px;margin-bottom:14px;
+  background:linear-gradient(135deg,var(--purple),var(--pink));
+  display:flex;align-items:center;justify-content:center;
+  font-weight:900;font-size:13px;color:#fff;letter-spacing:1px;
+  box-shadow:0 4px 16px rgba(108,99,255,.35);cursor:pointer;
+}
+.si{
+  width:42px;height:42px;border-radius:10px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:17px;cursor:pointer;
+  transition:all .2s;color:var(--txt3);
+  position:relative;
+}
+.si:hover{background:rgba(255,255,255,.06);color:var(--txt2)}
+.si.active{background:var(--purple-d);color:var(--purple-l)}
+.si.active::after{
+  content:'';position:absolute;right:-1px;top:20%;bottom:20%;
+  width:2px;background:var(--purple);border-radius:2px 0 0 2px;
+}
+.si-tooltip{
+  position:absolute;left:52px;top:50%;transform:translateY(-50%);
+  background:var(--s3);border:1px solid var(--bd2);
+  color:var(--txt);font-size:11px;font-weight:600;
+  padding:4px 10px;border-radius:6px;white-space:nowrap;
+  opacity:0;pointer-events:none;transition:opacity .15s;z-index:200;
+  letter-spacing:.3px;
+}
+.si:hover .si-tooltip{opacity:1}
+.si-div{width:24px;height:1px;background:var(--bd);margin:6px 0}
+.si.danger{color:rgba(255,107,107,.35)}
+.si.danger:hover{background:var(--red-d);color:var(--red)}
+.si.danger.active{background:var(--red-d);color:var(--red)}
+.si.danger.active::after{background:var(--red)}
+.sb-url-wrap{
+  margin-top:auto;padding:0 8px 6px;width:100%;
+  display:flex;flex-direction:column;align-items:center;gap:6px;
+}
+.sb-live{display:flex;align-items:center;gap:4px}
+.live-dot{width:5px;height:5px;border-radius:50%;background:var(--green);animation:blink 2s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
+.live-txt{font-size:8px;letter-spacing:1.5px;color:var(--txt3)}
+.sb-url-btn{
+  width:38px;height:38px;border-radius:10px;
+  background:var(--s2);border:1px solid var(--bd);
+  color:var(--txt3);font-size:14px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  transition:all .2s;position:relative;
+}
+.sb-url-btn:hover{border-color:var(--purple);color:var(--purple-l)}
+
+/* ══ MAIN ══ */
+.main{margin-left:64px;display:flex;flex-direction:column;min-height:100vh;overflow-x:hidden}
+
+.topbar{
+  position:sticky;top:0;z-index:50;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:.9rem 2rem;
+  background:rgba(8,8,15,.9);backdrop-filter:blur(20px);
+  border-bottom:1px solid var(--bd);
+}
+.tb-left{display:flex;flex-direction:column;gap:1px}
+.tb-section{font-size:.58rem;letter-spacing:3px;text-transform:uppercase;color:var(--txt3)}
+.tb-title{font-size:1.3rem;font-weight:900;color:var(--txt);letter-spacing:-.5px}
+.tb-title em{font-style:normal;background:linear-gradient(90deg,var(--purple-l),var(--pink));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.tb-right{display:flex;gap:.7rem;align-items:center}
+.live-pill{
+  display:flex;align-items:center;gap:.4rem;
+  background:rgba(74,222,128,.08);border:1px solid rgba(74,222,128,.15);
+  padding:.35rem .8rem;border-radius:999px;
+}
+.lp-dot{width:5px;height:5px;border-radius:50%;background:var(--green);animation:blink 2s infinite}
+.lp-txt{font-size:.65rem;letter-spacing:2px;color:rgba(74,222,128,.7);font-weight:700}
+.cast-btn{
+  background:linear-gradient(135deg,var(--purple),var(--pink));
+  color:#fff;border:none;font-size:.75rem;font-weight:700;
+  padding:.55rem 1.2rem;border-radius:var(--r);cursor:pointer;
+  letter-spacing:.5px;transition:all .2s;
+}
+.cast-btn:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(108,99,255,.4)}
+
+/* ══ PAGES ══ */
+.page{display:none;padding:1.8rem 2rem;animation:fadeUp .28s ease}
+.page.active{display:block}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.ph{margin-bottom:1.8rem}
+.ph h1{font-size:2.2rem;font-weight:900;letter-spacing:-.5px;line-height:1}
+.ph h1 em{font-style:normal;background:linear-gradient(90deg,var(--purple-l),var(--pink));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.ph-sub{font-size:.72rem;color:var(--txt3);margin-top:.3rem}
+
+/* ══ STATS ══ */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-bottom:1.6rem}
+.sc{
+  border-radius:var(--r2);padding:1.2rem 1.3rem;
+  position:relative;overflow:hidden;cursor:default;
+  transition:transform .2s;
+}
+.sc:hover{transform:translateY(-3px)}
+.sc1{background:linear-gradient(135deg,#1a1033,#0d0820);border:1px solid rgba(108,99,255,.2)}
+.sc2{background:linear-gradient(135deg,#0d1f1a,#081510);border:1px solid rgba(74,222,128,.15)}
+.sc3{background:linear-gradient(135deg,#1f150d,#150e08);border:1px solid rgba(251,176,64,.15)}
+.sc4{background:linear-gradient(135deg,#1a0d1f,#100815);border:1px solid rgba(255,107,157,.15)}
+.sc-bar{position:absolute;bottom:0;left:0;right:0;height:2px}
+.sc1 .sc-bar{background:linear-gradient(90deg,var(--purple),transparent)}
+.sc2 .sc-bar{background:linear-gradient(90deg,var(--green),transparent)}
+.sc3 .sc-bar{background:linear-gradient(90deg,var(--amber),transparent)}
+.sc4 .sc-bar{background:linear-gradient(90deg,var(--pink),transparent)}
+.sc-ico{font-size:1.5rem;margin-bottom:.7rem}
+.sc-val{font-size:2.2rem;font-weight:900;line-height:1}
+.sc1 .sc-val{color:var(--purple-l)}
+.sc2 .sc-val{color:var(--green)}
+.sc3 .sc-val{color:var(--amber)}
+.sc4 .sc-val{color:var(--pink)}
+.sc-lbl{font-size:.6rem;letter-spacing:2.5px;text-transform:uppercase;color:var(--txt3);margin-top:.3rem}
+
+/* ══ CARDS ══ */
+.card{background:var(--s1);border:1px solid var(--bd);border-radius:var(--r2);margin-bottom:1.2rem;overflow:hidden}
+.card-hd{display:flex;align-items:center;justify-content:space-between;padding:.85rem 1.3rem;border-bottom:1px solid var(--bd)}
+.card-title{font-size:.72rem;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--txt2)}
+.card-bd{padding:1.3rem}
+
+/* ══ FORMS ══ */
+.fg{display:grid;gap:.9rem}
+.fg2{grid-template-columns:1fr 1fr}
+.fg1{grid-template-columns:1fr}
+.field{display:flex;flex-direction:column;gap:.35rem}
+.field label{font-size:.6rem;letter-spacing:2px;text-transform:uppercase;color:var(--txt3);font-weight:700}
+.req{color:var(--red)}
+.field input,.field select{
+  background:var(--s2);border:1px solid var(--bd);
+  color:var(--txt);font-family:'Plus Jakarta Sans',sans-serif;font-size:.88rem;
+  padding:.65rem .9rem;outline:none;transition:border-color .2s;
+  -webkit-appearance:none;border-radius:var(--r);
+}
+.field input:focus,.field select:focus{border-color:var(--purple)}
+.field input::placeholder{color:var(--txt3)}
+.field select option{background:#14141e}
+.hint{font-size:.62rem;color:var(--txt3);margin-top:.18rem}
+
+/* ══ BUTTONS ══ */
+.btn{
+  font-family:'Plus Jakarta Sans',sans-serif;font-weight:700;
+  font-size:.75rem;letter-spacing:.8px;text-transform:uppercase;
+  padding:.55rem 1.2rem;border:none;cursor:pointer;
+  transition:all .18s;display:inline-flex;align-items:center;gap:.4rem;
+  border-radius:var(--r);
+}
+.btn-purple{background:linear-gradient(135deg,var(--purple),#8B7FF8);color:#fff}
+.btn-purple:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(108,99,255,.4)}
+.btn-green{background:linear-gradient(135deg,#22c55e,var(--green));color:#000}
+.btn-green:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(74,222,128,.3)}
+.btn-amber{background:linear-gradient(135deg,#f59e0b,var(--amber));color:#000;font-weight:800}
+.btn-amber:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(251,176,64,.3)}
+.btn-red{background:linear-gradient(135deg,#ef4444,var(--red));color:#fff}
+.btn-red:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(255,107,107,.3)}
+.btn-ghost{background:transparent;color:var(--txt2);border:1px solid var(--bd)}
+.btn-ghost:hover{border-color:var(--purple);color:var(--purple-l)}
+.btn-pink{background:linear-gradient(135deg,var(--pink),#FF8FB3);color:#fff}
+.btn-pink:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(255,107,157,.35)}
+.btn-sm{padding:.3rem .7rem;font-size:.68rem}
+.btn:disabled{opacity:.35;cursor:not-allowed;transform:none!important;box-shadow:none!important}
+
+/* ══ TABLE ══ */
+.tbl{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:.82rem}
+thead th{
+  padding:.65rem 1rem;text-align:left;
+  font-size:.57rem;letter-spacing:2.5px;text-transform:uppercase;
+  color:var(--txt3);border-bottom:1px solid var(--bd);
+  background:rgba(255,255,255,.01);white-space:nowrap;
+}
+tbody td{padding:.72rem 1rem;border-bottom:1px solid rgba(255,255,255,.03);vertical-align:middle}
+tbody tr:hover td{background:rgba(108,99,255,.04)}
+tbody tr:last-child td{border-bottom:none}
+.act{display:flex;gap:.35rem}
+
+/* ══ BADGES ══ */
+.badge{display:inline-flex;align-items:center;padding:.18rem .55rem;font-size:.58rem;letter-spacing:1.5px;text-transform:uppercase;font-weight:700;border-radius:4px}
+.bv{background:var(--purple-d);color:var(--purple-l)}
+.bg{background:var(--green-d);color:var(--green)}
+.ba{background:var(--amber-d);color:var(--amber)}
+.br{background:var(--red-d);color:var(--red)}
+.bp{background:var(--pink-d);color:var(--pink)}
+.bt{background:var(--teal-d);color:var(--teal)}
+.bgr{background:rgba(255,255,255,.05);color:var(--txt2)}
+
+/* ══ AVATAR ══ */
+.av{width:28px;height:28px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:10px;color:#fff;flex-shrink:0}
+.av1{background:linear-gradient(135deg,var(--purple),var(--purple-l))}
+.av2{background:linear-gradient(135deg,#22c55e,var(--green))}
+.av3{background:linear-gradient(135deg,#f59e0b,var(--amber))}
+.av4{background:linear-gradient(135deg,var(--pink),#FF8FB3)}
+.av5{background:linear-gradient(135deg,var(--teal),#22d3ee)}
+.av-row{display:flex;align-items:center;gap:.6rem}
+
+/* ══ VOTE BARS ══ */
+.vb-wrap{display:flex;flex-direction:column;gap:.9rem;padding:1rem 1.3rem}
+.vb-row{display:flex;flex-direction:column;gap:.4rem}
+.vb-top{display:flex;justify-content:space-between;align-items:center}
+.vb-name{font-size:.82rem;color:var(--txt2);font-weight:500}
+.vb-pct{font-size:.82rem;font-weight:900}
+.vb-bg{height:5px;background:rgba(255,255,255,.05);border-radius:3px;overflow:hidden}
+.vb-fill{height:100%;border-radius:3px;transition:width .6s ease}
+
+/* ══ RESULT CARD ══ */
+.rc{
+  background:linear-gradient(135deg,#1a1033,#110d22);
+  border:1px solid rgba(108,99,255,.25);border-radius:var(--r2);
+  padding:1.6rem;margin-bottom:1rem;position:relative;overflow:hidden;
+}
+.rc::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:2px;
+  background:linear-gradient(90deg,var(--purple),var(--pink),var(--amber));
+}
+.rc-glow{position:absolute;top:-30px;right:-30px;width:120px;height:120px;background:radial-gradient(circle,rgba(108,99,255,.25),transparent 70%)}
+.rc-label{font-size:.58rem;letter-spacing:3px;text-transform:uppercase;color:var(--txt3);margin-bottom:.4rem}
+.rc-election{font-size:.82rem;font-weight:700;color:var(--txt2);margin-bottom:.3rem}
+.rc-winner{font-size:1.6rem;font-weight:900;color:var(--txt);margin-bottom:.15rem;letter-spacing:-.3px}
+.rc-party{
+  display:inline-block;font-size:.65rem;font-weight:700;letter-spacing:1.5px;
+  text-transform:uppercase;color:var(--purple-l);
+  background:var(--purple-d);padding:.2rem .6rem;border-radius:4px;
+  margin-bottom:1rem;
+}
+.rc-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:.7rem;margin-top:1rem}
+.rs{background:rgba(255,255,255,.04);border-radius:8px;padding:.8rem;text-align:center}
+.rs-val{font-size:1.5rem;font-weight:900;color:var(--amber)}
+.rs-val.green{color:var(--green)}
+.rs-val.pink{color:var(--pink)}
+.rs-lbl{font-size:.58rem;letter-spacing:2px;text-transform:uppercase;color:var(--txt3);margin-top:.1rem}
+.rc-bar-wrap{height:5px;background:rgba(255,255,255,.05);border-radius:3px;overflow:hidden;margin-top:.9rem}
+.rc-bar-fill{height:100%;background:linear-gradient(90deg,var(--purple),var(--pink));border-radius:3px;transition:width .6s}
+
+/* ══ CANDIDATE PICKER ══ */
+.cand-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:.8rem}
+.cp{
+  background:var(--s2);border:2px solid var(--bd);
+  padding:1.1rem .9rem;cursor:pointer;transition:all .2s;
+  text-align:center;border-radius:var(--r2);position:relative;
+}
+.cp:hover{border-color:var(--purple);background:var(--purple-d)}
+.cp.sel{border-color:var(--purple);background:var(--purple-d)}
+.cp.sel::after{content:'✓';position:absolute;top:.4rem;right:.6rem;color:var(--purple-l);font-weight:900;font-size:.8rem}
+.cp-av{width:44px;height:44px;border-radius:50%;margin:0 auto .7rem;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:1.1rem;color:#fff;box-shadow:0 4px 12px rgba(108,99,255,.3)}
+.cp-name{font-weight:700;font-size:.85rem;margin-bottom:.2rem;color:var(--txt)}
+.cp-party{font-size:.7rem;color:var(--txt2)}
+.cp-votes{margin-top:.5rem;font-weight:900;font-size:1.2rem;color:var(--amber)}
+.cp-vl{font-size:.55rem;letter-spacing:2px;text-transform:uppercase;color:var(--txt3)}
+
+/* ══ VOTER PREVIEW ══ */
+.vp-box{background:var(--s2);border:1px solid var(--bd);padding:.9rem 1rem;border-radius:var(--r);display:none}
+.vp-name{font-weight:700;font-size:.9rem}
+.vp-email{font-size:.76rem;color:var(--txt2);margin-top:.12rem}
+.vp-status{margin-top:.45rem}
+
+/* ══ VOTE CONFIRMED ══ */
+.vote-done{
+  display:none;
+  background:linear-gradient(135deg,rgba(74,222,128,.08),rgba(45,212,191,.04));
+  border:1px solid rgba(74,222,128,.2);
+  padding:1.4rem;text-align:center;margin-top:1rem;border-radius:var(--r2);
+}
+.vote-done h3{font-size:1.4rem;font-weight:900;color:var(--green);letter-spacing:1px}
+.vote-done p{font-size:.8rem;color:var(--txt2);margin-top:.3rem}
+
+/* ══ RESET PAGE ══ */
+.reset-warn{
+  background:linear-gradient(135deg,rgba(255,107,107,.07),rgba(255,107,157,.04));
+  border:1px solid rgba(255,107,107,.18);
+  padding:1.4rem;border-radius:var(--r2);margin-bottom:1.3rem;
+}
+.rw-title{font-weight:700;color:var(--red);font-size:.85rem;margin-bottom:.8rem}
+.rw-list{display:flex;flex-direction:column;gap:.45rem}
+.rw-item{display:flex;align-items:flex-start;gap:.6rem;font-size:.8rem;color:var(--txt2);line-height:1.4}
+.rw-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;margin-top:.35rem}
+
+/* ══ INFO BOX ══ */
+.info-box{font-size:.7rem;color:var(--txt2);background:var(--s2);padding:.8rem 1rem;border-radius:var(--r);border:1px solid var(--bd);line-height:1.6}
+
+/* ══ QUICK ACTIONS ══ */
+.qa-row{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-bottom:1.6rem}
+.qa{background:var(--s1);border:1px solid var(--bd);padding:1.2rem;cursor:pointer;transition:all .2s;text-align:center;border-radius:var(--r2);position:relative;overflow:hidden}
+.qa::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(108,99,255,.07),transparent);opacity:0;transition:opacity .2s}
+.qa:hover::before{opacity:1}
+.qa:hover{border-color:rgba(108,99,255,.25);transform:translateY(-2px)}
+.qa-icon{font-size:1.6rem;margin-bottom:.45rem}
+.qa-lbl{font-weight:700;font-size:.82rem;color:var(--txt)}
+.qa-desc{font-size:.68rem;color:var(--txt3);margin-top:.2rem}
+
+/* ══ EMPTY ══ */
+.empty{text-align:center;padding:2.8rem 1rem;color:var(--txt3)}
+.empty-ico{font-size:2.2rem;opacity:.2;margin-bottom:.7rem}
+.empty p{font-size:.82rem}
+
+/* ══ TOAST ══ */
+#toasts{position:fixed;bottom:1.5rem;right:1.5rem;z-index:9999;display:flex;flex-direction:column;gap:.45rem;pointer-events:none}
+.toast{
+  padding:.85rem 1.2rem;font-size:.8rem;font-weight:600;
+  min-width:260px;max-width:400px;
+  display:flex;align-items:flex-start;gap:.55rem;
+  border-left:3px solid;animation:tIn .3s ease;border-radius:var(--r);pointer-events:all;
+}
+.toast.success{background:rgba(7,20,14,.97);border-color:var(--green);color:var(--green)}
+.toast.error{background:rgba(20,8,8,.97);border-color:var(--red);color:var(--red)}
+.toast.info{background:rgba(10,8,25,.97);border-color:var(--purple-l);color:var(--purple-l)}
+.toast.warn{background:rgba(20,14,8,.97);border-color:var(--amber);color:var(--amber)}
+.toast-msg{flex:1;line-height:1.45;word-break:break-word}
+@keyframes tIn{from{opacity:0;transform:translateX(40px)}to{opacity:1;transform:translateX(0)}}
+
+/* ══ MODAL ══ */
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.82);backdrop-filter:blur(8px);z-index:500;align-items:center;justify-content:center;padding:1rem}
+.overlay.open{display:flex}
+.modal{background:var(--s1);border:1px solid var(--bd2);width:100%;max-width:460px;max-height:90vh;overflow-y:auto;border-radius:var(--r2);box-shadow:0 30px 80px rgba(0,0,0,.7)}
+.modal-hd{display:flex;align-items:center;justify-content:space-between;padding:1.1rem 1.4rem;border-bottom:1px solid var(--bd)}
+.modal-title{font-size:.8rem;font-weight:700;letter-spacing:1px;text-transform:uppercase}
+.modal-x{background:none;border:none;color:var(--txt3);font-size:1.1rem;cursor:pointer;padding:.2rem .5rem;transition:color .18s;border-radius:4px;line-height:1}
+.modal-x:hover{color:var(--txt);background:rgba(255,255,255,.06)}
+.modal-bd{padding:1.4rem;display:flex;flex-direction:column;gap:1rem}
+.modal-ft{padding:1rem 1.4rem;border-top:1px solid var(--bd);display:flex;justify-content:flex-end;gap:.6rem}
+
+/* ══ URL MODAL ══ */
+.url-modal{background:var(--s1);border:1px solid var(--bd2);width:100%;max-width:360px;border-radius:var(--r2);padding:1.4rem}
+.url-modal h3{font-size:.85rem;font-weight:700;margin-bottom:1rem;letter-spacing:.5px}
+
+/* ══ TWO COL ══ */
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:1.3rem}
+.three-col{display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem}
+code{font-family:monospace;font-size:.73rem;background:var(--s3);padding:.1rem .4rem;border-radius:3px;color:var(--teal)}
+
+/* ══ SPINNER ══ */
+.spin{width:13px;height:13px;border:2px solid rgba(255,255,255,.2);border-top-color:#fff;border-radius:50%;animation:sp .5s linear infinite;display:inline-block;vertical-align:middle}
+@keyframes sp{to{transform:rotate(360deg)}}
+
+@media(max-width:900px){
+  .layout{grid-template-columns:1fr}
+  .sidebar{display:none}
+  .main{margin-left:0}
+  .stats,.qa-row{grid-template-columns:1fr 1fr}
+  .two-col,.three-col{grid-template-columns:1fr}
+  .fg2{grid-template-columns:1fr}
+  .cand-grid{grid-template-columns:1fr 1fr}
+  .page{padding:1.2rem}
+}
+</style>
+</head>
+<body>
+<div class="layout">
+
+<!-- ══ ICON SIDEBAR ══ -->
+<aside class="sidebar">
+  <div class="sb-logo" onclick="go('dashboard')">VZ</div>
+
+  <div class="si active" onclick="go('dashboard')">
+    📊<span class="si-tooltip">Dashboard</span>
+  </div>
+
+  <div class="si-div"></div>
+
+  <div class="si" onclick="go('candidates')">
+    🏛️<span class="si-tooltip">Candidates</span>
+  </div>
+  <div class="si" onclick="go('voters')">
+    👥<span class="si-tooltip">Voters</span>
+  </div>
+
+  <div class="si-div"></div>
+
+  <div class="si" onclick="go('vote')">
+    🗳️<span class="si-tooltip">Cast Vote</span>
+  </div>
+  <div class="si" onclick="go('allvotes')">
+    📋<span class="si-tooltip">All Votes</span>
+  </div>
+  <div class="si" onclick="go('results')">
+    🏆<span class="si-tooltip">Results</span>
+  </div>
+
+  <div class="si-div"></div>
+
+  <div class="si danger" onclick="go('reset')">
+    🔄<span class="si-tooltip">Reset Election</span>
+  </div>
+
+  <div class="sb-url-wrap">
+    <div class="sb-live">
+      <span class="live-dot"></span>
+      <span class="live-txt">LIVE</span>
+    </div>
+    <div class="sb-url-btn" onclick="openModal('modal-url')" title="Change API URL">
+      🔗<span class="si-tooltip">API URL</span>
+    </div>
+  </div>
+</aside>
+
+<!-- ══ MAIN ══ -->
+<main class="main">
+  <div class="topbar">
+    <div class="tb-left">
+      <div class="tb-section" id="tb-section">Overview</div>
+      <div class="tb-title" id="topbar-title">DASH<em>BOARD</em></div>
+    </div>
+    <div class="tb-right">
+      <div class="live-pill"><span class="lp-dot"></span><span class="lp-txt">LIVE</span></div>
+      <button class="btn btn-ghost btn-sm" onclick="refreshCurrent()">⟳</button>
+      <button class="cast-btn" onclick="go('vote')">🗳️ Cast Vote</button>
+    </div>
+  </div>
+
+  <!-- DASHBOARD -->
+  <div class="page active" id="page-dashboard">
+    <div class="ph">
+      <h1>DASH<em>BOARD</em></h1>
+      <div class="ph-sub">VoteZy · Real-time Election Overview</div>
+    </div>
+
+    <div class="stats">
+      <div class="sc sc1"><div class="sc-bar"></div><div class="sc-ico">🏛️</div><div class="sc-val" id="s-cand">—</div><div class="sc-lbl">Candidates</div></div>
+      <div class="sc sc2"><div class="sc-bar"></div><div class="sc-ico">👥</div><div class="sc-val" id="s-voter">—</div><div class="sc-lbl">Voters</div></div>
+      <div class="sc sc3"><div class="sc-bar"></div><div class="sc-ico">🗳️</div><div class="sc-val" id="s-votes">—</div><div class="sc-lbl">Votes Cast</div></div>
+      <div class="sc sc4"><div class="sc-bar"></div><div class="sc-ico">🏆</div><div class="sc-val" id="s-res">—</div><div class="sc-lbl">Results</div></div>
+    </div>
+
+    <div class="qa-row">
+      <div class="qa" onclick="go('candidates')"><div class="qa-icon">🏛️</div><div class="qa-lbl">Add Candidate</div><div class="qa-desc">POST /api/candidate/add</div></div>
+      <div class="qa" onclick="go('voters')"><div class="qa-icon">👤</div><div class="qa-lbl">Register Voter</div><div class="qa-desc">POST /api/voters/register</div></div>
+      <div class="qa" onclick="go('vote')"><div class="qa-icon">🗳️</div><div class="qa-lbl">Cast Vote</div><div class="qa-desc">POST /api/vote/cast</div></div>
+    </div>
+
+    <div class="two-col">
+      <div>
+        <div class="card">
+          <div class="card-hd"><span class="card-title">🏛️ Vote Distribution</span><button class="btn btn-ghost btn-sm" onclick="go('candidates')">View All →</button></div>
+          <div class="vb-wrap" id="dash-vbars"><div style="padding:.5rem;text-align:center;color:var(--txt3);font-size:.78rem">Loading...</div></div>
+        </div>
+        <div class="card">
+          <div class="card-hd"><span class="card-title">👥 Voters</span><button class="btn btn-ghost btn-sm" onclick="go('voters')">View All →</button></div>
+          <div class="tbl"><table>
+            <thead><tr><th>ID</th><th>Name</th><th>Email</th><th>Status</th></tr></thead>
+            <tbody id="dash-voters"></tbody>
+          </table></div>
+        </div>
+      </div>
+      <div>
+        <div id="dash-result-card" style="margin-bottom:1.2rem">
+          <div class="rc" style="opacity:.4"><div class="rc-glow"></div><div class="rc-label">🏆 Latest Result</div><div class="rc-winner" style="font-size:1rem;color:var(--txt3)">No results declared yet</div></div>
+        </div>
+        <div class="card">
+          <div class="card-hd"><span class="card-title">⚡ Quick Actions</span></div>
+          <div class="card-bd" style="display:flex;flex-direction:column;gap:.6rem">
+            <button class="btn btn-purple" style="justify-content:flex-start;width:100%" onclick="go('candidates')">🏛️ Add Candidate</button>
+            <button class="btn btn-green" style="justify-content:flex-start;width:100%" onclick="go('voters')">👤 Register Voter</button>
+            <button class="btn btn-amber" style="justify-content:flex-start;width:100%" onclick="go('vote')">🗳️ Cast Vote</button>
+            <button class="btn btn-pink" style="justify-content:flex-start;width:100%" onclick="go('results')">🏆 Declare Result</button>
+            <button class="btn btn-ghost" style="justify-content:flex-start;width:100%;color:var(--red);border-color:rgba(255,107,107,.2)" onclick="go('reset')">🔄 Reset Election</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CANDIDATES -->
+  <div class="page" id="page-candidates">
+    <div class="ph"><h1>CANDI<em>DATES</em></h1><div class="ph-sub">POST /api/candidate/add · GET /api/candidate/getallcandidate · PUT /updatecandidate/{id} · DELETE /delete/{id}</div></div>
+    <div class="card">
+      <div class="card-hd"><span class="card-title">➕ Add New Candidate</span></div>
+      <div class="card-bd">
+        <div class="fg fg2">
+          <div class="field"><label>Name <span class="req">*</span></label><input id="c-name" placeholder="e.g. Narendra Modi" autocomplete="off"/><span class="hint">@NotBlank — required</span></div>
+          <div class="field"><label>Party <span class="req">*</span></label><input id="c-party" placeholder="e.g. Bharatiya Janata Party" autocomplete="off"/><span class="hint">@NotBlank — required</span></div>
+        </div>
+        <div style="margin-top:1rem;display:flex;align-items:center;gap:1rem;flex-wrap:wrap">
+          <button class="btn btn-purple" id="btn-add-cand" onclick="addCandidate()">➕ Add Candidate</button>
+          <span class="hint">id auto-generated · voteCount = 0</span>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-hd"><span class="card-title">All Candidates</span><span id="cand-count" class="badge bv">0</span></div>
+      <div class="tbl"><table>
+        <thead><tr><th>ID</th><th>Name</th><th>Party</th><th>Vote Count</th><th>Actions</th></tr></thead>
+        <tbody id="cands-tb"></tbody>
+      </table></div>
+    </div>
+  </div>
+
+  <!-- VOTERS -->
+  <div class="page" id="page-voters">
+    <div class="ph"><h1>VOT<em>ERS</em></h1><div class="ph-sub">POST /api/voters/register · GET /api/voters/getallvoter · PUT /update/{id} · DELETE /delete/{id}</div></div>
+    <div class="card">
+      <div class="card-hd"><span class="card-title">✅ Register New Voter</span></div>
+      <div class="card-bd">
+        <div class="fg fg2">
+          <div class="field"><label>Name <span class="req">*</span></label><input id="v-name" placeholder="e.g. Priya Sharma" autocomplete="off"/><span class="hint">@NotBlank — required</span></div>
+          <div class="field"><label>Email <span class="req">*</span></label><input id="v-email" type="email" placeholder="priya@example.com" autocomplete="off"/><span class="hint">@NotBlank @Email · unique</span></div>
+        </div>
+        <div style="margin-top:1rem;display:flex;align-items:center;gap:1rem;flex-wrap:wrap">
+          <button class="btn btn-green" id="btn-reg-voter" onclick="registerVoter()">✅ Register Voter</button>
+          <span class="hint">id auto-generated · hasVoted = false</span>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-hd"><span class="card-title">All Voters</span><span id="voter-count" class="badge bg">0</span></div>
+      <div class="tbl"><table>
+        <thead><tr><th>ID</th><th>Name</th><th>Email</th><th>Has Voted</th><th>Actions</th></tr></thead>
+        <tbody id="voters-tb"></tbody>
+      </table></div>
+    </div>
+  </div>
+
+  <!-- CAST VOTE -->
+  <div class="page" id="page-vote">
+    <div class="ph"><h1>CAST <em>VOTE</em></h1><div class="ph-sub">POST /api/vote/cast · {voterId, candidateId} · VoteNotAllowedException (403) if already voted</div></div>
+    <div class="two-col" style="align-items:start">
+      <div class="card">
+        <div class="card-hd"><span class="card-title">👤 Select Voter</span></div>
+        <div class="card-bd" style="display:flex;flex-direction:column;gap:.9rem">
+          <div class="field"><label>Voter ID <span class="req">*</span></label><input id="vote-vid" type="number" min="1" placeholder="Enter voter ID" oninput="syncVoterPick(this.value)"/></div>
+          <div class="field"><label>Or select from list</label><select id="vote-vsel" onchange="document.getElementById('vote-vid').value=this.value;syncVoterPick(this.value)"><option value="">— choose voter —</option></select></div>
+          <div class="vp-box" id="voter-prev"><div class="vp-name" id="vp-name"></div><div class="vp-email" id="vp-email"></div><div class="vp-status" id="vp-status"></div></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-hd"><span class="card-title">🏛️ Select Candidate</span></div>
+        <div class="card-bd"><div class="cand-grid" id="vote-cand-grid"><div class="empty"><div class="empty-ico">🏛️</div><p>Loading...</p></div></div></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-bd" style="display:flex;align-items:center;gap:1.2rem;flex-wrap:wrap">
+        <button class="btn btn-purple" id="btn-cast" onclick="castVote()" style="padding:.7rem 2rem;font-size:.82rem">🗳️ Cast Vote</button>
+        <span class="hint">Sends: <code>{ "voterId": &lt;Long&gt;, "candidateId": &lt;Long&gt; }</code></span>
+      </div>
+    </div>
+    <div class="vote-done" id="vote-done"><h3>✅ VOTE CAST!</h3><p id="vote-done-msg"></p></div>
+  </div>
+
+  <!-- ALL VOTES -->
+  <div class="page" id="page-allvotes">
+    <div class="ph"><h1>ALL <em>VOTES</em></h1><div class="ph-sub">GET /api/vote/getallvotes · Fields: id, votereId, candidateId</div></div>
+    <div class="card">
+      <div class="card-hd"><span class="card-title">Vote Records</span><span id="votes-count" class="badge bg">0</span></div>
+      <div class="tbl"><table>
+        <thead><tr><th>Vote ID</th><th>Voter ID <small style="opacity:.4">(votereId)</small></th><th>Candidate ID</th></tr></thead>
+        <tbody id="votes-tb"></tbody>
+      </table></div>
+    </div>
+  </div>
+
+  <!-- RESULTS -->
+  <div class="page" id="page-results">
+    <div class="ph"><h1>ELEC<em>TION</em> RESULTS</h1><div class="ph-sub">POST /api/election-result/declare · GET /api/election-result/getallresults</div></div>
+    <div class="card">
+      <div class="card-hd"><span class="card-title">🏆 Declare Result</span></div>
+      <div class="card-bd">
+        <div style="display:flex;gap:.9rem;align-items:flex-end;flex-wrap:wrap">
+          <div class="field" style="flex:1;min-width:260px">
+            <label>Election Name <span class="req">*</span></label>
+            <input id="el-name" placeholder="e.g. General Election 2024" autocomplete="off"/>
+            <span class="hint">@NotBlank · Returns existing if already declared</span>
+          </div>
+          <button class="btn btn-amber" id="btn-declare" onclick="declareResult()" style="margin-bottom:.02rem">🏆 Declare</button>
+        </div>
+        <div id="declare-box" style="display:none;margin-top:1.2rem"></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-hd">
+        <span class="card-title">All Declared Results</span>
+        <div style="display:flex;align-items:center;gap:.6rem">
+          <span id="res-count" class="badge bp">0</span>
+          <button class="btn btn-red btn-sm" onclick="deleteAllResults()" id="btn-del-all-res">🗑️ Delete All</button>
+        </div>
+      </div>
+      <div class="card-bd" id="res-grid"><div class="empty"><div class="empty-ico">🏆</div><p>No results declared yet</p></div></div>
+    </div>
+  </div>
+
+  <!-- RESET -->
+  <div class="page" id="page-reset">
+    <div class="ph"><h1>RESET <em>ELECTION</em></h1><div class="ph-sub">DELETE /api/vote/reset · Votes + Candidates reset · Results PRESERVED ✅</div></div>
+    <div class="reset-warn">
+      <div class="rw-title">⚠️ Yeh action kya karega:</div>
+      <div class="rw-list">
+        <div class="rw-item"><span class="rw-dot" style="background:var(--red)"></span><span>Saare <strong>Votes</strong> delete</span></div>
+        <div class="rw-item"><span class="rw-dot" style="background:var(--red)"></span><span>Saare <strong>Candidates</strong> delete</span></div>
+        <div class="rw-item"><span class="rw-dot" style="background:var(--red)"></span><span>Voters ka <code>hasVoted → false</code></span></div>
+        <div class="rw-item"><span class="rw-dot" style="background:var(--green)"></span><span><strong>Election Results SAFE</strong> — winnerName/Party/Votes directly saved ✅</span></div>
+        <div class="rw-item"><span class="rw-dot" style="background:var(--green)"></span><span><strong>Voters SAFE</strong> — naam/email safe, sirf hasVoted reset ✅</span></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-hd" style="border-color:rgba(255,107,107,.12)"><span class="card-title" style="color:var(--red)">🔄 Start New Election</span></div>
+      <div class="card-bd">
+        <div class="info-box" style="background:rgba(255,107,107,.05);border-color:rgba(255,107,107,.12);margin-bottom:1.2rem">⚠️ Pehle <strong>election result declare</strong> kar lena — warna current data lost ho jaayega!</div>
+        <button class="btn btn-red" id="btn-reset" onclick="resetElection()" style="padding:.75rem 2rem;font-size:.85rem">🔄 Reset & Start Fresh</button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-hd"><span class="card-title">✅ Previous Results (Safe)</span><span id="res-count2" class="badge bp">0</span></div>
+      <div class="card-bd" id="res-grid2"><div class="empty"><div class="empty-ico">🏆</div><p>No results yet</p></div></div>
+    </div>
+  </div>
+</main>
+</div>
+
+<!-- EDIT CANDIDATE MODAL -->
+<div class="overlay" id="modal-cand">
+  <div class="modal">
+    <div class="modal-hd"><span class="modal-title">✏️ Update Candidate</span><button class="modal-x" onclick="closeModal('modal-cand')">✕</button></div>
+    <div class="modal-bd">
+      <input type="hidden" id="uc-id"/>
+      <div class="field"><label>Name <span class="req">*</span></label><input id="uc-name"/></div>
+      <div class="field"><label>Party <span class="req">*</span></label><input id="uc-party"/></div>
+      <div class="info-box">ℹ️ <code>voteCount</code> is managed by voting system.</div>
+    </div>
+    <div class="modal-ft"><button class="btn btn-ghost" onclick="closeModal('modal-cand')">Cancel</button><button class="btn btn-purple" onclick="updateCandidate()">Save</button></div>
+  </div>
+</div>
+
+<!-- EDIT VOTER MODAL -->
+<div class="overlay" id="modal-voter">
+  <div class="modal">
+    <div class="modal-hd"><span class="modal-title">✏️ Update Voter</span><button class="modal-x" onclick="closeModal('modal-voter')">✕</button></div>
+    <div class="modal-bd">
+      <input type="hidden" id="uv-id"/>
+      <div class="field"><label>Name <span class="req">*</span></label><input id="uv-name"/></div>
+      <div class="field"><label>Email <span class="req">*</span></label><input id="uv-email" type="email"/><span class="hint">Must be unique</span></div>
+      <div class="info-box">ℹ️ <code>hasVoted</code> is managed by voting system.</div>
+    </div>
+    <div class="modal-ft"><button class="btn btn-ghost" onclick="closeModal('modal-voter')">Cancel</button><button class="btn btn-purple" onclick="updateVoter()">Save</button></div>
+  </div>
+</div>
+
+<!-- URL MODAL -->
+<div class="overlay" id="modal-url">
+  <div class="url-modal">
+    <h3>🔗 API Base URL</h3>
+    <div class="field"><label>Spring Boot URL</label><input id="url-input" placeholder="http://localhost:8080"/></div>
+    <div style="display:flex;gap:.6rem;margin-top:1rem;justify-content:flex-end">
+      <button class="btn btn-ghost" onclick="closeModal('modal-url')">Cancel</button>
+      <button class="btn btn-purple" onclick="saveUrl()">Save</button>
+    </div>
+  </div>
+</div>
+
+<div id="toasts"></div>
+
+<script>
+'use strict';
+
+// ══ API ══
+const BASE = () => localStorage.getItem('votezy-url') || 'http://localhost:8080';
+
+function parseErr(data) {
+  if (!data) return 'Unknown error';
+  if (typeof data === 'string') return data;
+  if (data.messageString) return data.messageString;
+  if (data.message) return data.message;
+  const vals = Object.values(data);
+  return vals.length ? vals.join(' | ') : JSON.stringify(data);
+}
+
+async function api(method, path, body = null) {
+  const opts = { method, headers: { 'Content-Type': 'application/json' } };
+  if (body !== null) opts.body = JSON.stringify(body);
+  try {
+    const res = await fetch(BASE() + path, opts);
+    const text = await res.text();
+    let data; try { data = JSON.parse(text); } catch { data = text; }
+    if (!res.ok) throw new Error(parseErr(data));
+    return data;
+  } catch(e) {
+    if (e.name === 'TypeError') throw new Error('Cannot reach server at ' + BASE() + ' — is Spring Boot running?');
+    throw e;
+  }
+}
+
+// ══ TOAST ══
+function toast(msg, type = 'info', ms = 5000) {
+  const icons = { success:'✅', error:'❌', info:'ℹ️', warn:'⚠️' };
+  const el = document.createElement('div');
+  el.className = `toast ${type}`;
+  el.innerHTML = `<span>${icons[type]||'ℹ️'}</span><span class="toast-msg">${msg}</span>`;
+  document.getElementById('toasts').appendChild(el);
+  setTimeout(() => { el.style.transition='all .3s';el.style.opacity='0';el.style.transform='translateX(40px)';setTimeout(()=>el.remove(),310); }, ms);
+}
+
+// ══ UTILS ══
+function setLoad(id, on) {
+  const b = document.getElementById(id); if (!b) return;
+  if (on) { b._t = b.innerHTML; b.innerHTML = `<span class="spin"></span>`; b.disabled = true; }
+  else { b.innerHTML = b._t || b.innerHTML; b.disabled = false; }
+}
+function openModal(id) {
+  document.getElementById(id).classList.add('open');
+  if (id === 'modal-url') document.getElementById('url-input').value = BASE();
+}
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+function saveUrl() {
+  const v = document.getElementById('url-input').value.trim().replace(/\/+$/,'');
+  if (v) { localStorage.setItem('votezy-url', v); toast('API URL updated!', 'success'); closeModal('modal-url'); }
+}
+function esc(s) { if (s==null) return ''; return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function noData(cols, ico, msg) { return `<tr><td colspan="${cols}"><div class="empty"><div class="empty-ico">${ico}</div><p>${msg}</p></div></td></tr>`; }
+function dRow(cols, msg) { return `<tr><td colspan="${cols}" style="padding:1rem;text-align:center;color:var(--txt3);font-size:.78rem">${msg}</td></tr>`; }
+
+// Avatar colors
+const avColors = [
+  'background:linear-gradient(135deg,#6C63FF,#9B8FFF)',
+  'background:linear-gradient(135deg,#22c55e,#4ADE80)',
+  'background:linear-gradient(135deg,#f59e0b,#FBB040)',
+  'background:linear-gradient(135deg,#FF6B9D,#FF8FB3)',
+  'background:linear-gradient(135deg,#2DD4BF,#22d3ee)',
+  'background:linear-gradient(135deg,#3B82F6,#60a5fa)',
+];
+function getAv(name, idx) {
+  const initials = name ? name.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2) : '??';
+  const style = avColors[idx % avColors.length];
+  return `<div class="av" style="${style}">${initials}</div>`;
+}
+
+// ══ NAVIGATION ══
+const SECTIONS = { dashboard:'Overview', candidates:'Management', voters:'Management', vote:'Election', allvotes:'Election', results:'Election', reset:'Actions' };
+const TITLES = { dashboard:'DASHBOARD', candidates:'CANDIDATES', voters:'VOTERS', vote:'CAST VOTE', allvotes:'ALL VOTES', results:'RESULTS', reset:'RESET' };
+const LOADERS = { candidates:loadCandidates, voters:loadVoters, vote:loadVotePage, allvotes:loadAllVotes, results:loadResults, reset:loadResetPage };
+let currentPage = 'dashboard';
+
+function go(page) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.si').forEach(s => s.classList.remove('active'));
+  document.getElementById('page-' + page).classList.add('active');
+  document.querySelectorAll('.si').forEach(s => {
+    if ((s.getAttribute('onclick')||'').includes(`'${page}'`)) s.classList.add('active');
+  });
+  const titleEl = document.getElementById('topbar-title');
+  const t = TITLES[page] || page.toUpperCase();
+  const mid = Math.floor(t.length / 2);
+  titleEl.innerHTML = esc(t.slice(0, mid)) + `<em>${esc(t.slice(mid))}</em>`;
+  document.getElementById('tb-section').textContent = SECTIONS[page] || '';
+  currentPage = page;
+  if (LOADERS[page]) LOADERS[page]();
+}
+
+function refreshCurrent() {
+  if (currentPage === 'dashboard') initAll();
+  else if (LOADERS[currentPage]) LOADERS[currentPage]();
+}
+
+// ══ STATE ══
+let candidates = [];
+let voters = [];
+let allVotes = [];
+let selCandId = null;
+
+// ══ CANDIDATES ══
+async function loadCandidates() {
+  try {
+    candidates = await api('GET', '/api/candidate/getallcandidate');
+    renderCands(); renderDashBars(); renderDashResult();
+    document.getElementById('s-cand').textContent = candidates.length;
+    document.getElementById('cand-count').textContent = candidates.length + ' total';
+    renderVoteCands(); populateVoterSelect();
+  } catch(e) { toast('Candidates: ' + e.message, 'error'); }
+}
+
+function renderCands() {
+  const tb = document.getElementById('cands-tb');
+  if (!candidates.length) { tb.innerHTML = noData(5,'🏛️','No candidates yet.'); return; }
+  tb.innerHTML = candidates.map((c,i) => `
+    <tr>
+      <td><span class="badge bv">#${c.id}</span></td>
+      <td><div class="av-row">${getAv(c.name, i)}<strong>${esc(c.name)}</strong></div></td>
+      <td>${esc(c.party)}</td>
+      <td><span class="badge ${c.voteCount > 0 ? 'ba' : 'bgr'}">${c.voteCount ?? 0} votes</span></td>
+      <td><div class="act">
+        <button class="btn btn-ghost btn-sm" onclick='editCand(${JSON.stringify(c)})'>✏️</button>
+        <button class="btn btn-red btn-sm" onclick="delCand(${c.id},'${esc(c.name)}')">🗑️</button>
+      </div></td>
+    </tr>`).join('');
+}
+
+function renderDashBars() {
+  const wrap = document.getElementById('dash-vbars');
+  if (!candidates.length) { wrap.innerHTML = `<div style="padding:.5rem;text-align:center;color:var(--txt3);font-size:.78rem">No candidates yet</div>`; return; }
+  const total = candidates.reduce((s,c) => s + (c.voteCount||0), 0);
+  const barColors = ['linear-gradient(90deg,#6C63FF,#9B8FFF)','linear-gradient(90deg,#22c55e,#4ADE80)','linear-gradient(90deg,#f59e0b,#FBB040)','linear-gradient(90deg,#FF6B9D,#FF8FB3)','linear-gradient(90deg,#2DD4BF,#22d3ee)'];
+  wrap.innerHTML = candidates.map((c,i) => {
+    const pct = total > 0 ? Math.round(((c.voteCount||0)/total)*100) : 0;
+    const pctColors = ['var(--purple-l)','var(--green)','var(--amber)','var(--pink)','var(--teal)'];
+    return `
+      <div class="vb-row">
+        <div class="vb-top">
+          <span class="vb-name"><span style="display:inline-flex;align-items:center;gap:6px">${getAv(c.name,i)}${esc(c.name)} · ${esc(c.party)}</span></span>
+          <span class="vb-pct" style="color:${pctColors[i%5]}">${pct}%</span>
+        </div>
+        <div class="vb-bg"><div class="vb-fill" style="width:${pct}%;${barColors[i%5].replace('linear-gradient','background:linear-gradient')}"></div></div>
+      </div>`;
+  }).join('');
+}
+
+function renderDashResult() {
+  // Will be updated by loadResults
+}
+
+async function addCandidate() {
+  const name = document.getElementById('c-name').value.trim();
+  const party = document.getElementById('c-party').value.trim();
+  if (!name) { toast('Name is required', 'error'); return; }
+  if (!party) { toast('Party is required', 'error'); return; }
+  setLoad('btn-add-cand', true);
+  try {
+    const saved = await api('POST', '/api/candidate/add', { name, party });
+    toast(`"${saved.name}" added! ID: #${saved.id}`, 'success');
+    document.getElementById('c-name').value = '';
+    document.getElementById('c-party').value = '';
+    await loadCandidates();
+  } catch(e) { toast(e.message, 'error'); }
+  finally { setLoad('btn-add-cand', false); }
+}
+
+function editCand(c) {
+  document.getElementById('uc-id').value = c.id;
+  document.getElementById('uc-name').value = c.name;
+  document.getElementById('uc-party').value = c.party;
+  openModal('modal-cand');
+}
+
+async function updateCandidate() {
+  const id = document.getElementById('uc-id').value;
+  const name = document.getElementById('uc-name').value.trim();
+  const party = document.getElementById('uc-party').value.trim();
+  if (!name || !party) { toast('Name and Party required', 'error'); return; }
+  try {
+    await api('PUT', `/api/candidate/updatecandidate/${id}`, { name, party });
+    toast(`Candidate #${id} updated!`, 'success');
+    closeModal('modal-cand');
+    await loadCandidates();
+  } catch(e) { toast(e.message, 'error'); }
+}
+
+async function delCand(id, name) {
+  if (!confirm(`Delete "${name}" (#${id})?\nVotes cleared. Voters can vote again.`)) return;
+  try {
+    const msg = await api('DELETE', `/api/candidate/delete/${id}`);
+    toast(typeof msg === 'string' ? msg : `Candidate #${id} deleted`, 'success');
+    await initAll();
+  } catch(e) { toast(e.message, 'error'); }
+}
+
+// ══ VOTERS ══
+async function loadVoters() {
+  try {
+    voters = await api('GET', '/api/voters/getallvoter');
+    renderVoters(); renderDashVoters();
+    document.getElementById('s-voter').textContent = voters.length;
+    document.getElementById('voter-count').textContent = voters.length + ' total';
+    populateVoterSelect();
+  } catch(e) { toast('Voters: ' + e.message, 'error'); }
+}
+
+function renderVoters() {
+  const tb = document.getElementById('voters-tb');
+  if (!voters.length) { tb.innerHTML = noData(5,'👥','No voters registered yet.'); return; }
+  tb.innerHTML = voters.map((v,i) => `
+    <tr>
+      <td><span class="badge bt">#${v.id}</span></td>
+      <td><div class="av-row">${getAv(v.name, i)}<strong>${esc(v.name)}</strong></div></td>
+      <td style="font-size:.78rem;color:var(--txt2)">${esc(v.email)}</td>
+      <td><span class="badge ${v.hasVoted?'bg':'br'}">${v.hasVoted?'✓ Voted':'✗ Pending'}</span></td>
+      <td><div class="act">
+        <button class="btn btn-ghost btn-sm" onclick='editVoter(${JSON.stringify(v)})'>✏️</button>
+        <button class="btn btn-red btn-sm" onclick="delVoter(${v.id},'${esc(v.name)}')">🗑️</button>
+      </div></td>
+    </tr>`).join('');
+}
+
+function renderDashVoters() {
+  const tb = document.getElementById('dash-voters');
+  if (!voters.length) { tb.innerHTML = dRow(4, 'No voters'); return; }
+  tb.innerHTML = voters.slice(0,5).map((v,i) => `
+    <tr>
+      <td><span class="badge bt">#${v.id}</span></td>
+      <td><div class="av-row">${getAv(v.name,i)}${esc(v.name)}</div></td>
+      <td style="font-size:.76rem;color:var(--txt2)">${esc(v.email)}</td>
+      <td><span class="badge ${v.hasVoted?'bg':'br'}">${v.hasVoted?'Yes':'No'}</span></td>
+    </tr>`).join('');
+}
+
+async function registerVoter() {
+  const name = document.getElementById('v-name').value.trim();
+  const email = document.getElementById('v-email').value.trim();
+  if (!name) { toast('Name is required', 'error'); return; }
+  if (!email) { toast('Email is required', 'error'); return; }
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { toast('Invalid email format', 'error'); return; }
+  setLoad('btn-reg-voter', true);
+  try {
+    const saved = await api('POST', '/api/voters/register', { name, email, hasVoted: false });
+    toast(`"${saved.name}" registered! ID: #${saved.id}`, 'success');
+    document.getElementById('v-name').value = '';
+    document.getElementById('v-email').value = '';
+    await loadVoters();
+  } catch(e) { toast(e.message, 'error'); }
+  finally { setLoad('btn-reg-voter', false); }
+}
+
+function editVoter(v) {
+  document.getElementById('uv-id').value = v.id;
+  document.getElementById('uv-name').value = v.name;
+  document.getElementById('uv-email').value = v.email;
+  openModal('modal-voter');
+}
+
+async function updateVoter() {
+  const id = document.getElementById('uv-id').value;
+  const name = document.getElementById('uv-name').value.trim();
+  const email = document.getElementById('uv-email').value.trim();
+  if (!name || !email) { toast('Name and Email required', 'error'); return; }
+  const voter = voters.find(v => v.id == id);
+  try {
+    await api('PUT', `/api/voters/update/${id}`, { name, email, hasVoted: voter ? voter.hasVoted : false });
+    toast(`Voter #${id} updated!`, 'success');
+    closeModal('modal-voter');
+    await loadVoters();
+  } catch(e) { toast(e.message, 'error'); }
+}
+
+async function delVoter(id, name) {
+  if (!confirm(`Delete "${name}" (#${id})?\nIf voted, candidate voteCount auto-decrements.`)) return;
+  try {
+    const msg = await api('DELETE', `/api/voters/delete/${id}`);
+    toast(typeof msg === 'string' ? msg : `Voter #${id} deleted`, 'success');
+    await Promise.all([loadVoters(), loadCandidates()]);
+  } catch(e) { toast(e.message, 'error'); }
+}
+
+// ══ VOTING ══
+async function loadVotePage() {
+  await Promise.all([loadCandidates(), loadVoters()]);
+  renderVoteCands(); populateVoterSelect();
+}
+
+function renderVoteCands() {
+  const grid = document.getElementById('vote-cand-grid');
+  if (!grid) return;
+  if (!candidates.length) { grid.innerHTML = `<div class="empty"><div class="empty-ico">🏛️</div><p>No candidates. Add first.</p></div>`; return; }
+  grid.innerHTML = candidates.map((c,i) => `
+    <div class="cp ${selCandId===c.id?'sel':''}" id="cp-${c.id}" onclick="pickCand(${c.id})">
+      <div class="cp-av" style="${avColors[i%avColors.length].replace('background:','')}">${c.name?c.name.charAt(0).toUpperCase():'?'}</div>
+      <div class="cp-name">${esc(c.name)}</div>
+      <div class="cp-party">${esc(c.party)}</div>
+      <div class="cp-votes">${c.voteCount??0}</div>
+      <div class="cp-vl">votes</div>
+    </div>`).join('');
+}
+
+function populateVoterSelect() {
+  const sel = document.getElementById('vote-vsel'); if (!sel) return;
+  const prev = sel.value;
+  sel.innerHTML = '<option value="">— choose voter —</option>' +
+    voters.map(v => `<option value="${v.id}" ${v.hasVoted?'disabled':''}>#${v.id} — ${esc(v.name)}${v.hasVoted?' (voted)':''}</option>`).join('');
+  if (prev) sel.value = prev;
+}
+
+function pickCand(id) {
+  selCandId = id;
+  document.querySelectorAll('.cp').forEach(el => el.classList.remove('sel'));
+  const el = document.getElementById('cp-'+id); if (el) el.classList.add('sel');
+}
+
+function syncVoterPick(val) {
+  const sel = document.getElementById('vote-vsel');
+  if (sel && sel.value !== String(val)) sel.value = val || '';
+  const voter = voters.find(v => v.id == val);
+  const prev = document.getElementById('voter-prev');
+  if (voter) {
+    document.getElementById('vp-name').textContent = voter.name;
+    document.getElementById('vp-email').textContent = voter.email;
+    document.getElementById('vp-status').innerHTML = `<span class="badge ${voter.hasVoted?'br':'bg'}">${voter.hasVoted?'⚠️ Already Voted (403)':'✓ Eligible'}</span>`;
+    prev.style.display = 'block';
+  } else { prev.style.display = 'none'; }
+}
+
+async function castVote() {
+  const voterId = parseInt(document.getElementById('vote-vid').value);
+  if (!voterId) { toast('Enter Voter ID', 'error'); return; }
+  if (!selCandId) { toast('Select a candidate', 'error'); return; }
+  setLoad('btn-cast', true);
+  try {
+    const res = await api('POST', '/api/vote/cast', { voterId, candidateId: selCandId });
+    const box = document.getElementById('vote-done');
+    box.style.display = 'block';
+    document.getElementById('vote-done-msg').textContent = `${res.message} | Voter #${res.voterId} → Candidate #${res.candidateId}`;
+    toast(res.message || 'Vote cast!', 'success');
+    document.getElementById('vote-vid').value = '';
+    document.getElementById('vote-vsel').value = '';
+    document.getElementById('voter-prev').style.display = 'none';
+    selCandId = null;
+    await initAll();
+    renderVoteCands();
+  } catch(e) { toast(e.message, 'error'); }
+  finally { setLoad('btn-cast', false); }
+}
+
+// ══ ALL VOTES ══
+async function loadAllVotes() {
+  try {
+    allVotes = await api('GET', '/api/vote/getallvotes');
+    document.getElementById('s-votes').textContent = allVotes.length;
+    document.getElementById('votes-count').textContent = allVotes.length + ' records';
+    const tb = document.getElementById('votes-tb');
+    if (!allVotes.length) { tb.innerHTML = noData(3,'🗳️','No votes cast yet'); return; }
+    tb.innerHTML = allVotes.map(v => `
+      <tr>
+        <td><span class="badge bg">#${v.id}</span></td>
+        <td><span class="badge bt">${v.votereId??'—'}</span></td>
+        <td><span class="badge bv">${v.candidateId??'—'}</span></td>
+      </tr>`).join('');
+  } catch(e) { toast('Votes: ' + e.message, 'error'); }
+}
+
+// ══ RESULTS ══
+function renderResultCards(results, gridId, countId) {
+  if (countId) document.getElementById(countId).textContent = results.length + ' results';
+  const grid = document.getElementById(gridId);
+  if (!results.length) { grid.innerHTML = `<div class="empty"><div class="empty-ico">🏆</div><p>No results declared yet</p></div>`; return; }
+  grid.innerHTML = results.map((r,i) => {
+    const wName  = r.winnerName  || (r.winner ? r.winner.name  : 'Unknown');
+    const wParty = r.winnerParty || (r.winner ? r.winner.party : '');
+    const wVotes = r.winnerVotes || (r.winner ? r.winner.voteCount : 0);
+    const lost   = r.totalVotes - wVotes;
+    const pct    = r.totalVotes > 0 ? Math.round((wVotes/r.totalVotes)*100) : 0;
+    // candidatesSnapshot parse karo
+    let candidates = [];
+    try { candidates = JSON.parse(r.candidatesSnapshot || '[]'); } catch(e) {}
+    const barColors = [
+      'linear-gradient(90deg,#6C63FF,#9B8FFF)',
+      'linear-gradient(90deg,#22c55e,#4ADE80)',
+      'linear-gradient(90deg,#f59e0b,#FBB040)',
+      'linear-gradient(90deg,#FF6B9D,#FF8FB3)',
+      'linear-gradient(90deg,#2DD4BF,#22d3ee)',
+    ];
+    const delBtn = `<button onclick="deleteResult(${r.id})" style="background:var(--red-d);border:1px solid rgba(255,107,107,.2);color:var(--red);font-size:.68rem;font-weight:700;padding:.3rem .7rem;border-radius:5px;cursor:pointer;letter-spacing:.5px">🗑️ Delete</button>`;
+    const candRows = candidates.map((c,ci) => {
+      const cpct = r.totalVotes > 0 ? Math.round((c.votes/r.totalVotes)*100) : 0;
+      return `
+        <div style="margin-bottom:.7rem">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.3rem">
+            <span style="font-size:.82rem;color:var(--txt2);display:flex;align-items:center;gap:.5rem">
+              ${c.name === wName ? '<span style="font-size:.65rem;background:var(--amber-d);color:var(--amber);padding:.1rem .4rem;border-radius:3px;font-weight:700">🏆 WINNER</span>' : ''}
+              <strong style="color:${c.name===wName?'var(--txt)':'var(--txt2)'}">
+                ${esc(c.name)}
+              </strong>
+              <span style="font-size:.7rem;color:var(--txt3)">${esc(c.party)}</span>
+            </span>
+            <span style="font-size:.82rem;font-weight:700;color:var(--txt2)">${c.votes} votes · ${cpct}%</span>
+          </div>
+          <div style="height:4px;background:rgba(255,255,255,.06);border-radius:2px;overflow:hidden">
+            <div style="height:100%;width:${cpct}%;${barColors[ci%5]};border-radius:2px"></div>
+          </div>
+        </div>`;
+    }).join('');
+    return `
+      <div class="rc" style="animation:fadeUp .3s ease ${i*.1}s both">
+        <div class="rc-glow"></div>
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:1rem">
+          <div>
+            <div class="rc-label">🏆 ${esc(r.electionName)}</div>
+            <div class="rc-winner">${esc(wName)}</div>
+            ${wParty ? `<div class="rc-party">${esc(wParty)}</div>` : ''}
+          </div>
+          <div style="text-align:right;display:flex;flex-direction:column;align-items:flex-end;gap:.5rem">
+            <div style="font-size:2.2rem;font-weight:900;color:var(--amber);line-height:1">${pct}%</div>
+            <div style="font-size:.58rem;letter-spacing:2px;text-transform:uppercase;color:var(--txt3)">Vote Share</div>
+            ${delBtn}
+          </div>
+        </div>
+        <div class="rc-bar-wrap"><div class="rc-bar-fill" style="width:${pct}%"></div></div>
+        <div class="rc-stats">
+          <div class="rs"><div class="rs-val">${r.totalVotes}</div><div class="rs-lbl">Total</div></div>
+          <div class="rs"><div class="rs-val green">${wVotes}</div><div class="rs-lbl">Won</div></div>
+          <div class="rs"><div class="rs-val pink">${lost}</div><div class="rs-lbl">Lost</div></div>
+        </div>
+        ${candidates.length ? `
+          <div style="margin-top:1rem;border-top:1px solid var(--bd);padding-top:1rem">
+            <div style="font-size:.62rem;letter-spacing:2px;text-transform:uppercase;color:var(--txt3);margin-bottom:.8rem">All Candidates</div>
+            ${candRows}
+          </div>` : ''}
+      </div>`;
+  }).join('');
+}
+
+async function loadResults() {
+  try {
+    const results = await api('GET', '/api/election-result/getallresults');
+    document.getElementById('s-res').textContent = results.length;
+    document.getElementById('res-count').textContent = results.length + ' results';
+    renderResultCards(results, 'res-grid', null);
+    // Update dashboard result card
+    const dashCard = document.getElementById('dash-result-card');
+    if (results.length) {
+      const r = results[results.length-1];
+      const wName  = r.winnerName  || (r.winner ? r.winner.name  : 'Unknown');
+      const wParty = r.winnerParty || (r.winner ? r.winner.party : '');
+      const wVotes = r.winnerVotes || (r.winner ? r.winner.voteCount : 0);
+      const pct    = r.totalVotes > 0 ? Math.round((wVotes/r.totalVotes)*100) : 0;
+      const lost   = r.totalVotes - wVotes;
+      dashCard.innerHTML = `
+        <div class="rc">
+          <div class="rc-glow"></div>
+          <div class="rc-label">🏆 Latest Result</div>
+          <div class="rc-election">${esc(r.electionName)}</div>
+          <div class="rc-winner">${esc(wName)}</div>
+          ${wParty?`<div class="rc-party">${esc(wParty)}</div>`:''}
+          <div class="rc-bar-wrap"><div class="rc-bar-fill" style="width:${pct}%"></div></div>
+          <div class="rc-stats">
+            <div class="rs"><div class="rs-val">${r.totalVotes}</div><div class="rs-lbl">Total</div></div>
+            <div class="rs"><div class="rs-val green">${wVotes}</div><div class="rs-lbl">Won</div></div>
+            <div class="rs"><div class="rs-val" style="color:var(--amber)">${pct}%</div><div class="rs-lbl">Share</div></div>
+          </div>
+        </div>`;
+    }
+  } catch(e) { toast('Results: ' + e.message, 'error'); }
+}
+
+async function declareResult() {
+  const electionName = document.getElementById('el-name').value.trim();
+  if (!electionName) { toast('Election name required', 'error'); return; }
+  setLoad('btn-declare', true);
+  try {
+    const res = await api('POST', '/api/election-result/declare', { electionName });
+    const pct = res.totalVotes > 0 ? Math.round((res.winnerVotes/res.totalVotes)*100) : 0;
+    const lost = res.totalVotes - res.winnerVotes;
+    const box = document.getElementById('declare-box');
+    box.style.display = 'block';
+    box.innerHTML = `
+      <div class="rc">
+        <div class="rc-glow"></div>
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:1rem">
+          <div>
+            <div class="rc-label">✅ DECLARED: ${esc(res.name)}</div>
+            <div class="rc-winner">Result Saved!</div>
+          </div>
+          <div style="text-align:right">
+            <div style="font-size:2rem;font-weight:900;color:var(--amber);line-height:1">${pct}%</div>
+            <div style="font-size:.58rem;letter-spacing:2px;text-transform:uppercase;color:var(--txt3)">Vote Share</div>
+          </div>
+        </div>
+        <div class="rc-bar-wrap"><div class="rc-bar-fill" style="width:${pct}%"></div></div>
+        <div class="rc-stats">
+          <div class="rs"><div class="rs-val">${res.totalVotes}</div><div class="rs-lbl">Total</div></div>
+          <div class="rs"><div class="rs-val green">${res.winnerVotes}</div><div class="rs-lbl">Won</div></div>
+          <div class="rs"><div class="rs-val pink">${lost}</div><div class="rs-lbl">Lost</div></div>
+        </div>
+      </div>`;
+    toast(`Result declared for "${res.name}"!`, 'success');
+    document.getElementById('el-name').value = '';
+    await loadResults();
+  } catch(e) { toast(e.message, 'error'); }
+  finally { setLoad('btn-declare', false); }
+}
+
+// ══ RESET ══
+async function loadResetPage() {
+  try {
+    const results = await api('GET', '/api/election-result/getallresults');
+    renderResultCards(results, 'res-grid2', 'res-count2');
+  } catch(e) {}
+}
+
+async function resetElection() {
+  if (!confirm('Bhai sure hai?\n\nVotes + Candidates delete honge.\nVoters safe (hasVoted = false).\nPrevious results safe.\n\nConfirm?')) return;
+  setLoad('btn-reset', true);
+  try {
+    const msg = await api('DELETE', '/api/vote/reset');
+    toast(typeof msg === 'string' ? msg : 'Election reset successfully!', 'success');
+    await initAll();
+    loadResetPage();
+  } catch(e) { toast(e.message, 'error'); }
+  finally { setLoad('btn-reset', false); }
+}
+
+// ══ DELETE RESULTS ══
+async function deleteResult(id) {
+  if (!confirm('Delete this result? This cannot be undone.')) return;
+  try {
+    const msg = await api('DELETE', `/api/election-result/delete/${id}`);
+    toast(typeof msg === 'string' ? msg : 'Result deleted!', 'success');
+    await loadResults();
+  } catch(e) { toast(e.message, 'error'); }
+}
+
+async function deleteAllResults() {
+  if (!confirm('Delete ALL results? This cannot be undone!')) return;
+  setLoad('btn-del-all-res', true);
+  try {
+    const msg = await api('DELETE', '/api/election-result/deleteall');
+    toast(typeof msg === 'string' ? msg : 'All results deleted!', 'success');
+    await loadResults();
+  } catch(e) { toast(e.message, 'error'); }
+  finally { setLoad('btn-del-all-res', false); }
+}
+
+// ══ INIT ══
+async function initAll() {
+  await Promise.all([loadCandidates(), loadVoters(), loadAllVotes(), loadResults()]);
+}
+
+// Set saved URL on load
+document.addEventListener('DOMContentLoaded', () => {
+  const saved = localStorage.getItem('votezy-url');
+  if (saved) console.log('Using API URL:', saved);
+});
+
+initAll();
+</script>
+</body>
+</html>
